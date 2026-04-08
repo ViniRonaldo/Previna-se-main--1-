@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Interno | Controle de Extintores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="painel.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <div class="logo-box">
+          <div class="logo-icon">🧯</div>
+          <div>
+            <h2 id="nomeEmpresaSidebar">Previna-se</h2>
+            <p>Painel interno</p>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a href="#" class="menu-link active" data-section="dashboard">Dashboard</a>
+          <a href="#" class="menu-link" data-section="extintores">Extintores</a>
+          <a href="#" class="menu-link" data-section="inspecoes">Inspeções</a>
+          <a href="#" class="menu-link" data-section="relatorios">Relatórios</a>
+          <a href="#" class="menu-link" data-section="configuracoes">Configurações</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-actions">
+        <a href="/modulos" class="back-btn">Voltar</a>
+        <a href="/logout" class="logout-btn">Sair</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h1 id="tituloSecao">Controle de Extintores</h1>
+          <p id="subtituloSecao">Acompanhe status, vencimentos e inspeções em tempo real.</p>
+        </div>
+        <div class="user-box">Usuário interno</div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="sec-dashboard" class="section-content active-section">
+        <section class="cards">
+          <div class="card info-card red">
+            <span>Total de extintores</span>
+            <strong id="totalExtintores">0</strong>
+          </div>
+
+          <div class="card info-card yellow">
+            <span>Próximos do vencimento</span>
+            <strong id="totalProximos">0</strong>
+          </div>
+
+          <div class="card info-card green">
+            <span>Em dia</span>
+            <strong id="totalEmDia">0</strong>
+          </div>
+
+          <div class="card info-card dark">
+            <span>Vencidos</span>
+            <strong id="totalVencidos">0</strong>
+          </div>
+        </section>
+
+        <section class="dashboard-grid">
+          <div class="card chart-card">
+            <div class="section-title">
+              <h2>Controle geral</h2>
+              <p>Distribuição atual dos extintores</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="graficoExtintores"></canvas>
+            </div>
+          </div>
+
+          <div class="card alerts-card">
+            <div class="section-title">
+              <h2>Alertas rápidos</h2>
+              <p>Itens que merecem atenção</p>
+            </div>
+
+            <div class="alert-item danger">
+              <strong id="alertaVencidos">0 extintores vencidos</strong>
+              <span>Necessário realizar troca ou recarga imediata.</span>
+            </div>
+
+            <div class="alert-item warning">
+              <strong id="alertaProximos">0 próximos do vencimento</strong>
+              <span>Validade termina dentro do período de alerta.</span>
+            </div>
+
+            <div class="alert-item success">
+              <strong id="alertaEmDia">0 extintores em dia</strong>
+              <span>Todos com manutenção regularizada.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card table-card">
+          <div class="section-title table-header">
+            <div>
+              <h2>Últimos extintores cadastrados</h2>
+              <p>Visualização rápida do sistema</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tipo</th>
+                  <th>Local</th>
+                  <th>Validade</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaDashboard"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <!-- EXTINTORES -->
+      <section id="sec-extintores" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Cadastrar extintor</h2>
+            <p>Adicione um novo equipamento ao controle</p>
+          </div>
+
+          <form id="formExtintor" class="grid-form">
+            <input type="hidden" id="extintorIdEdicao">
+
+            <div>
+              <label for="tipo">Tipo</label>
+              <select id="tipo" required>
+                <option value="">Selecione</option>
+                <option value="Pó Químico">Pó Químico</option>
+                <option value="CO₂">CO₂</option>
+                <option value="Água Pressurizada">Água Pressurizada</option>
+                <option value="Espuma Mecânica">Espuma Mecânica</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="local">Local</label>
+              <input type="text" id="local" required>
+            </div>
+
+            <div>
+              <label for="validade">Validade</label>
+              <input type="date" id="validade" required>
+            </div>
+
+            <div>
+              <label for="numeroSerie">Número de série</label>
+              <input type="text" id="numeroSerie" required>
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="submit" class="new-btn">Salvar extintor</button>
+              <button type="button" id="cancelarEdicao" class="secondary-btn">Cancelar edição</button>
+            </div>
+          </form>
+
+          <p id="mensagemExtintor" class="mensagem-form"></p>
+        </div>
+
+        <div class="card table-card">
+          <div class="section-title table-header">
+            <div>
+              <h2>Lista de extintores</h2>
+              <p>Controle interno por setor e validade</p>
+            </div>
+            <div class="actions-inline">
+              <button class="new-btn" id="btnPdfExtintores">Gerar PDF</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tipo</th>
+                  <th>Local</th>
+                  <th>Série</th>
+                  <th>Validade</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaExtintores"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSPEÇÕES -->
+      <section id="sec-inspecoes" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Registrar inspeção</h2>
+            <p>Adicione uma nova inspeção ao sistema</p>
+          </div>
+
+          <form id="formInspecao" class="grid-form">
+            <div>
+              <label for="inspecaoExtintor">Extintor</label>
+              <select id="inspecaoExtintor" required></select>
+            </div>
+
+            <div>
+              <label for="dataInspecao">Data da inspeção</label>
+              <input type="date" id="dataInspecao" required>
+            </div>
+
+            <div>
+              <label for="responsavelInspecao">Responsável</label>
+              <input type="text" id="responsavelInspecao" required>
+            </div>
+
+            <div>
+              <label for="resultadoInspecao">Resultado</label>
+              <select id="resultadoInspecao" required>
+                <option value="">Selecione</option>
+                <option value="Aprovado">Aprovado</option>
+                <option value="Manutenção necessária">Manutenção necessária</option>
+                <option value="Reprovado">Reprovado</option>
+              </select>
+            </div>
+
+            <div class="full-width">
+              <label for="observacoesInspecao">Observações</label>
+              <textarea id="observacoesInspecao" rows="4"></textarea>
+            </div>
+
+            <div class="full-width">
+              <button type="submit" class="new-btn">Registrar inspeção</button>
+            </div>
+          </form>
+
+          <p id="mensagemInspecao" class="mensagem-form"></p>
+        </div>
+
+        <div class="card table-card">
+          <div class="section-title">
+            <h2>Histórico de inspeções</h2>
+            <p>Últimos registros do sistema</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Extintor</th>
+                  <th>Data</th>
+                  <th>Responsável</th>
+                  <th>Resultado</th>
+                  <th>Observações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaInspecoes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- RELATÓRIOS -->
+      <section id="sec-relatorios" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Relatório geral</h2>
+            <p>Resumo automático das informações cadastradas</p>
+          </div>
+
+          <div class="relatorio-grid">
+            <div class="relatorio-box">
+              <h3>Total de extintores</h3>
+              <strong id="relatorioTotal">0</strong>
+            </div>
+            <div class="relatorio-box">
+              <h3>Total de inspeções</h3>
+              <strong id="relatorioInspecoes">0</strong>
+            </div>
+            <div class="relatorio-box">
+              <h3>Extintores vencidos</h3>
+              <strong id="relatorioVencidos">0</strong>
+            </div>
+            <div class="relatorio-box">
+              <h3>Próximos do vencimento</h3>
+              <strong id="relatorioProximos">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h2>Relatório por status</h2>
+            <p>Resumo textual para consulta rápida</p>
+          </div>
+
+          <div id="textoRelatorio" class="texto-relatorio"></div>
+        </div>
+      </section>
+
+      <!-- CONFIGURAÇÕES -->
+      <section id="sec-configuracoes" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Configurações do sistema</h2>
+            <p>Personalize o funcionamento do painel</p>
+          </div>
+
+          <form id="formConfiguracoes" class="grid-form">
+            <div>
+              <label for="nomeEmpresa">Nome da empresa</label>
+              <input type="text" id="nomeEmpresa" required>
+            </div>
+
+            <div>
+              <label for="diasAlerta">Dias para alerta de vencimento</label>
+              <input type="number" id="diasAlerta" min="1" required>
+            </div>
+
+            <div class="full-width">
+              <button type="submit" class="new-btn">Salvar configurações</button>
+            </div>
+          </form>
+
+          <p id="mensagemConfig" class="mensagem-form"></p>
+        </div>
+      </section>
+
+      <!-- HISTÓRICO -->
+      <section class="card table-card">
+        <div class="section-title">
+          <h2>Histórico de movimentações</h2>
+          <p>Cadastro, edição, exclusão e relatórios</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Módulo</th>
+                <th>Ação</th>
+                <th>Descrição</th>
+                <th>Data e hora</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaHistoricoExtintores"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- BACKUP -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Backup de dados</h2>
+          <p>Exporte ou importe as informações do sistema</p>
+        </div>
+
+        <div class="actions-inline top-space">
+          <button type="button" id="btnExportarBackupExt" class="new-btn">Exportar backup</button>
+          <label class="secondary-btn fake-input-file">
+            Importar backup
+            <input type="file" id="arquivoBackupExt" accept=".json">
+          </label>
+        </div>
+
+        <p id="mensagemBackupExt" class="mensagem-form"></p>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL QR -->
+  <div class="modal hidden" id="modalQrExt">
+    <div class="modal-content">
+      <h3>QR Code do extintor</h3>
+      <div id="qrCodeBoxExt"></div>
+      <button type="button" id="fecharModalQrExt" class="secondary-btn top-space">Fechar</button>
+    </div>
+  </div>
+
+  <script src="sistema-utils.js"></script>
+  <script src="painel.js"></script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previna-se | Modulos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="modulos.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-overlay"></div>
+
+      <div class="hero-content">
+        <div class="brand">
+          <div class="brand-icon">🛡️</div>
+          <div>
+            <h1>Previna-se</h1>
+            <p>Central de controle e seguranca</p>
+          </div>
+        </div>
+
+        <div class="hero-text">
+          <span class="tag">Sistema interno</span>
+          <h2>Escolha o modulo que deseja acessar</h2>
+          <p>
+            Gerencie extintores, EPIs e atestados em uma interface mais organizada,
+            moderna e profissional.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="modules-area">
+      <div class="modules-header">
+        <h3>Modulos disponiveis</h3>
+        <p>Selecione uma area para continuar</p>
+      </div>
+
+      <div class="cards">
+        <a href="epi.html" class="module-card">
+          <div class="card-icon epi">🦺</div>
+          <div class="card-text">
+            <h4>Controle de EPI</h4>
+            <p>
+              Cadastre funcionarios, controle estoque de EPIs, registre retiradas e acompanhe o historico.
+            </p>
+          </div>
+          <span class="card-action">Acessar</span>
+        </a>
+
+        <a href="painel.html" class="module-card">
+          <div class="card-icon extintor">🧯</div>
+          <div class="card-text">
+            <h4>Controle de Extintores</h4>
+            <p>
+              Acompanhe validade, inspecoes, relatorios e status dos equipamentos de seguranca.
+            </p>
+          </div>
+          <span class="card-action">Acessar</span>
+        </a>
+
+        <a href="https://atestados-ssmabb.netlify.app/dashboard" class="module-card" target="_blank" rel="noopener noreferrer">
+          <div class="card-icon atestados">AT</div>
+          <div class="card-text">
+            <h4>Controle de Atestados</h4>
+            <p>
+              Abra o dashboard completo de atestados em uma nova aba.
+            </p>
+          </div>
+          <span class="card-action">Acessar</span>
+        </a>
+      </div>
+
+      <div class="footer-box">
+        <p>&copy; 2026 Previna-se • Plataforma interna de gestao</p>
+        <a href="/logout" class="logout-link">Sair do sistema</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="modulos.js"></script>
+</body>
+</html>

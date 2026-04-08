@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de EPI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="epi.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <div class="logo-box">
+          <div class="logo-icon">🦺</div>
+          <div>
+            <h2>Controle de EPI</h2>
+            <p>Gestão interna</p>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a href="#" class="menu-link active" data-section="dashboard">Dashboard</a>
+          <a href="#" class="menu-link" data-section="funcionarios">Funcionários</a>
+          <a href="#" class="menu-link" data-section="epis">EPIs</a>
+          <a href="#" class="menu-link" data-section="retiradas">Ficha de retirada</a>
+          <a href="#" class="menu-link" data-section="historico">Histórico</a>
+          <a href="#" class="menu-link" data-section="backup">Backup</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-actions">
+        <a href="/modulos" class="back-btn">Voltar</a>
+        <a href="/logout" class="logout-btn">Sair</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h1 id="tituloSecao">Controle de EPI</h1>
+          <p id="subtituloSecao">Gerencie funcionários, EPIs e fichas de retirada.</p>
+        </div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="sec-dashboard" class="section-content active-section">
+        <section class="cards">
+          <div class="card info-card blue">
+            <span>Total de funcionários</span>
+            <strong id="totalFuncionarios">0</strong>
+          </div>
+          <div class="card info-card green">
+            <span>Total de EPIs</span>
+            <strong id="totalEpis">0</strong>
+          </div>
+          <div class="card info-card yellow">
+            <span>Retiradas registradas</span>
+            <strong id="totalRetiradas">0</strong>
+          </div>
+          <div class="card info-card red">
+            <span>Estoque baixo</span>
+            <strong id="totalEstoqueBaixo">0</strong>
+          </div>
+        </section>
+
+        <section class="grid-two">
+          <div class="card">
+            <div class="section-title">
+              <h2>Últimos funcionários</h2>
+              <p>Cadastros mais recentes</p>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Cargo</th>
+                    <th>Setor</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardFuncionarios"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">
+              <h2>Últimas retiradas</h2>
+              <p>Movimentações recentes</p>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Funcionário</th>
+                    <th>EPI</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardRetiradas"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- FUNCIONÁRIOS -->
+      <section id="sec-funcionarios" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Cadastrar funcionário</h2>
+            <p>Adicione um colaborador ao sistema</p>
+          </div>
+
+          <form id="formFuncionario" class="grid-form">
+            <input type="hidden" id="funcionarioIdEdicao">
+
+            <div>
+              <label for="nomeFuncionario">Nome</label>
+              <input type="text" id="nomeFuncionario" required>
+            </div>
+
+            <div>
+              <label for="cargoFuncionario">Cargo</label>
+              <input type="text" id="cargoFuncionario" required>
+            </div>
+
+            <div>
+              <label for="setorFuncionario">Setor</label>
+              <input type="text" id="setorFuncionario" required>
+            </div>
+
+            <div>
+              <label for="matriculaFuncionario">Matrícula</label>
+              <input type="text" id="matriculaFuncionario" required>
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="submit" class="primary-btn">Salvar funcionário</button>
+              <button type="button" id="cancelarFuncionario" class="secondary-btn">Cancelar edição</button>
+            </div>
+          </form>
+
+          <p id="mensagemFuncionario" class="mensagem-form"></p>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h2>Lista de funcionários</h2>
+            <p>Controle geral da equipe</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Cargo</th>
+                  <th>Setor</th>
+                  <th>Matrícula</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaFuncionarios"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- EPIS -->
+      <section id="sec-epis" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Cadastrar EPI</h2>
+            <p>Adicione um item para controle</p>
+          </div>
+
+          <form id="formEpi" class="grid-form">
+            <input type="hidden" id="epiIdEdicao">
+
+            <div>
+              <label for="nomeEpi">Nome do EPI</label>
+              <input type="text" id="nomeEpi" required>
+            </div>
+
+            <div>
+              <label for="categoriaEpi">Categoria</label>
+              <input type="text" id="categoriaEpi" required>
+            </div>
+
+            <div>
+              <label for="caEpi">CA</label>
+              <input type="text" id="caEpi" required>
+            </div>
+
+            <div>
+              <label for="estoqueEpi">Quantidade em estoque</label>
+              <input type="number" id="estoqueEpi" min="0" required>
+            </div>
+
+            <div>
+              <label for="minimoEpi">Estoque mínimo</label>
+              <input type="number" id="minimoEpi" min="0" required>
+            </div>
+
+            <div>
+              <label for="validadeEpi">Validade</label>
+              <input type="date" id="validadeEpi">
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="submit" class="primary-btn">Salvar EPI</button>
+              <button type="button" id="cancelarEpi" class="secondary-btn">Cancelar edição</button>
+            </div>
+          </form>
+
+          <p id="mensagemEpi" class="mensagem-form"></p>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <h2>Lista de EPIs</h2>
+            <p>Itens disponíveis para retirada</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Categoria</th>
+                  <th>CA</th>
+                  <th>Estoque</th>
+                  <th>Validade</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaEpis"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- RETIRADAS -->
+      <section id="sec-retiradas" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Ficha de retirada de EPI</h2>
+            <p>Registre a entrega de EPIs e objetos ao funcionário</p>
+          </div>
+
+          <form id="formRetirada" class="grid-form">
+            <div>
+              <label for="retiradaFuncionario">Funcionário</label>
+              <select id="retiradaFuncionario" required></select>
+            </div>
+
+            <div>
+              <label for="retiradaEpi">EPI / Objeto</label>
+              <select id="retiradaEpi" required></select>
+            </div>
+
+            <div>
+              <label for="quantidadeRetirada">Quantidade</label>
+              <input type="number" id="quantidadeRetirada" min="1" required>
+            </div>
+
+            <div>
+              <label for="dataRetirada">Data da retirada</label>
+              <input type="date" id="dataRetirada" required>
+            </div>
+
+            <div>
+              <label for="responsavelEntrega">Responsável pela entrega</label>
+              <input type="text" id="responsavelEntrega" required>
+            </div>
+
+            <div>
+              <label for="assinaturaRetirada">Assinatura digitada</label>
+              <input type="text" id="assinaturaRetirada" placeholder="Nome do funcionário" required>
+            </div>
+
+            <div class="full-width">
+              <label>Assinatura digital simples</label>
+              <canvas id="canvasAssinatura" class="signature-canvas"></canvas>
+              <div class="actions-inline top-space">
+                <button type="button" id="limparAssinatura" class="secondary-btn">Limpar assinatura</button>
+              </div>
+            </div>
+
+            <div class="full-width">
+              <label for="observacaoRetirada">Observação</label>
+              <textarea id="observacaoRetirada" rows="4"></textarea>
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="submit" class="primary-btn">Registrar retirada</button>
+              <button type="button" id="btnImprimirFicha" class="secondary-btn">Imprimir ficha</button>
+              <button type="button" id="btnPdfFicha" class="secondary-btn">Gerar PDF</button>
+            </div>
+          </form>
+
+          <p id="mensagemRetirada" class="mensagem-form"></p>
+        </div>
+
+        <div class="card" id="fichaEntrega">
+          <div class="section-title">
+            <h2>Prévia da ficha de entrega</h2>
+            <p>Modelo pronto para impressão e PDF</p>
+          </div>
+
+          <div class="ficha-pdf" id="conteudoFicha">
+            <table class="ficha-topo">
+              <tr>
+                <td class="logo-empresa">Logotipo da<br>Empresa</td>
+                <td class="titulo-ficha">FICHA DE CONTROLE E ENTREGA DE EPI</td>
+              </tr>
+            </table>
+
+            <table class="ficha-dados">
+              <tr>
+                <td colspan="2"><strong>NOME:</strong> <span id="pdfNome">-</span></td>
+                <td><strong>Nº DE REGISTRO:</strong> <span id="pdfRegistro">-</span></td>
+                <td><strong>DATA ADMISSÃO:</strong> <span id="pdfAdmissao">-</span></td>
+              </tr>
+              <tr>
+                <td><strong>FUNÇÃO:</strong> <span id="pdfFuncao">-</span></td>
+                <td><strong>SEÇÃO:</strong> <span id="pdfSetor">-</span></td>
+                <td colspan="2"><strong>DATA DEMISSÃO:</strong> __________________</td>
+              </tr>
+            </table>
+
+            <div class="ficha-termo">
+              <p>
+                Confirmo que recebi os <strong>EPI´s</strong> (Equipamentos de proteção Individual)
+                para meu uso obrigatório, observando as recomendações da NR 06.
+              </p>
+              <p>
+                Declaro ciente que terei que devolvê-los caso ocorra meu desligamento da empresa.
+              </p>
+
+              <div class="linha-assinatura-area">
+                <div class="linha-data">
+                  <span>DATA</span>
+                  <div class="linha-campo">
+                    <span id="pdfDataAssinatura">____/____/________</span>
+                  </div>
+                </div>
+
+                <div class="linha-ass-func">
+                  <span>ASSINATURA DO FUNCIONÁRIO</span>
+                  <div class="linha-campo assinatura-campo-pdf">
+                    <img id="pdfAssinaturaImagem" alt="Assinatura do funcionário">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <table class="ficha-itens">
+              <thead>
+                <tr>
+                  <th colspan="2">DATA</th>
+                  <th>QUANT.</th>
+                  <th>UNID.</th>
+                  <th>DESCRIÇÃO DO EQUIPAMENTO</th>
+                  <th>Nº DO C.A.</th>
+                  <th>ASSINATURA</th>
+                </tr>
+                <tr>
+                  <th>RETIREI</th>
+                  <th>DEVOLVI</th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="linhasFichaPdf">
+                <tr>
+                  <td id="pdfDataRetirei">-</td>
+                  <td></td>
+                  <td id="pdfQuantidade">-</td>
+                  <td id="pdfUnidade">UN</td>
+                  <td id="pdfDescricaoEquipamento">-</td>
+                  <td id="pdfCA">-</td>
+                  <td id="pdfAssinaturaNome">-</td>
+                </tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
+
+            <div class="observacao-pdf">
+              <strong>OBSERVAÇÃO:</strong> <span id="pdfObservacao">-</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTÓRICO -->
+      <section id="sec-historico" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Histórico de movimentações</h2>
+            <p>Controle de cadastros, edições, retiradas e exclusões</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Módulo</th>
+                  <th>Ação</th>
+                  <th>Descrição</th>
+                  <th>Data e hora</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaHistoricoEpi"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP -->
+      <section id="sec-backup" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Backup de dados</h2>
+            <p>Exporte ou importe as informações do sistema</p>
+          </div>
+
+          <div class="actions-inline top-space">
+            <button type="button" id="btnExportarBackup" class="primary-btn">Exportar backup</button>
+            <label class="secondary-btn fake-input-file">
+              Importar backup
+              <input type="file" id="arquivoBackup" accept=".json">
+            </label>
+          </div>
+
+          <p id="mensagemBackup" class="mensagem-form"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="modalQr">
+    <div class="modal-content">
+      <h3>QR Code do item</h3>
+      <div id="qrCodeBox"></div>
+      <button type="button" id="fecharModalQr" class="secondary-btn top-space">Fechar</button>
+    </div>
+  </div>
+
+  <script src="sistema-utils.js"></script>
+  <script src="epi.js"></script>
+</body>
+</html>

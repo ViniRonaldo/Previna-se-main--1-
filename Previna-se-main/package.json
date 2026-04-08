@@ -1,0 +1,13 @@
+{
+  "name": "controle-extintor",
+  "version": "1.0.0",
+  "description": "Sistema de controle de extintores com login",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1",
+    "express-session": "^1.18.1"
+  }
+}
