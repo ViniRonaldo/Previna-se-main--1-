@@ -1,53 +1,172 @@
-let grafico = null;
+﻿let grafico = null;
+
+let extintoresMemoria = [];
+let inspecoesMemoria = [];
+let configMemoria = {
+  nomeEmpresa: "Previna-se",
+  diasAlerta: 30
+};
+let historicoMemoria = [];
+
+let timerPersistencia = null;
+let persistenciaEmAndamento = false;
+
+async function carregarDadosServidor() {
+  const resposta = await fetch("/api/painel-dados", {
+    headers: { Accept: "application/json" }
+  });
+
+  if (!resposta.ok) {
+    throw new Error("Nao foi possivel carregar os dados do servidor.");
+  }
+
+  const payload = await resposta.json();
+  const dados = payload?.dados || {};
+
+  extintoresMemoria = Array.isArray(dados.extintores) ? dados.extintores : [];
+  inspecoesMemoria = Array.isArray(dados.inspecoes) ? dados.inspecoes : [];
+  historicoMemoria = Array.isArray(dados.historico) ? dados.historico : [];
+
+  const diasAlerta = Number(dados?.config?.diasAlerta);
+  configMemoria = {
+    nomeEmpresa: String(dados?.config?.nomeEmpresa || "Previna-se"),
+    diasAlerta: Number.isFinite(diasAlerta) && diasAlerta > 0 ? diasAlerta : 30
+  };
+}
+
+async function persistirDadosServidor() {
+  if (persistenciaEmAndamento) return;
+  persistenciaEmAndamento = true;
+
+  try {
+    await fetch("/api/painel-dados", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        extintores: extintoresMemoria,
+        inspecoes: inspecoesMemoria,
+        config: configMemoria,
+        historico: historicoMemoria
+      })
+    });
+  } catch (erro) {
+    console.error("Erro ao persistir dados do painel:", erro);
+  } finally {
+    persistenciaEmAndamento = false;
+  }
+}
+
+function agendarPersistencia() {
+  clearTimeout(timerPersistencia);
+  timerPersistencia = setTimeout(() => {
+    persistirDadosServidor();
+  }, 300);
+}
 
 function obterExtintores() {
-  return JSON.parse(localStorage.getItem("extintores_previna")) || [];
+  return extintoresMemoria;
 }
 
 function salvarExtintores(lista) {
-  localStorage.setItem("extintores_previna", JSON.stringify(lista));
+  extintoresMemoria = Array.isArray(lista) ? lista : [];
+  agendarPersistencia();
 }
 
 function obterInspecoes() {
-  return JSON.parse(localStorage.getItem("inspecoes_previna")) || [];
+  return inspecoesMemoria;
 }
 
 function salvarInspecoes(lista) {
-  localStorage.setItem("inspecoes_previna", JSON.stringify(lista));
+  inspecoesMemoria = Array.isArray(lista) ? lista : [];
+  agendarPersistencia();
 }
 
 function obterConfig() {
-  return JSON.parse(localStorage.getItem("config_previna")) || {
-    nomeEmpresa: "Previna-se",
-    diasAlerta: 30
+  return {
+    nomeEmpresa: configMemoria.nomeEmpresa,
+    diasAlerta: configMemoria.diasAlerta
   };
 }
 
 function salvarConfig(config) {
-  localStorage.setItem("config_previna", JSON.stringify(config));
+  const diasAlerta = Number(config?.diasAlerta);
+  configMemoria = {
+    nomeEmpresa: String(config?.nomeEmpresa || "Previna-se"),
+    diasAlerta: Number.isFinite(diasAlerta) && diasAlerta > 0 ? diasAlerta : 30
+  };
+  agendarPersistencia();
+}
+
+function obterHistoricoGeral() {
+  return historicoMemoria;
+}
+
+function salvarHistoricoGeral(lista) {
+  historicoMemoria = Array.isArray(lista) ? lista : [];
+  agendarPersistencia();
+}
+
+function registrarHistorico(modulo, acao, descricao) {
+  const historico = obterHistoricoGeral().slice();
+  historico.push({
+    id: Date.now(),
+    modulo,
+    acao,
+    descricao,
+    dataHora: new Date().toLocaleString("pt-BR")
+  });
+  salvarHistoricoGeral(historico);
+}
+
+function exportarBackupCompleto() {
+  const backup = {
+    extintores_previna: obterExtintores(),
+    inspecoes_previna: obterInspecoes(),
+    config_previna: obterConfig(),
+    historico_geral_previna: obterHistoricoGeral(),
+    data_exportacao: new Date().toLocaleString("pt-BR")
+  };
+
+  baixarArquivo(
+    "backup-previnase-extintores.json",
+    JSON.stringify(backup, null, 2),
+    "application/json"
+  );
+
+  registrarHistorico("Sistema", "Backup", "Backup do modulo de extintores exportado");
+}
+
+function importarBackupCompleto(arquivo, callback) {
+  const leitor = new FileReader();
+
+  leitor.onload = function (evento) {
+    try {
+      const dados = JSON.parse(evento.target.result);
+      extintoresMemoria = Array.isArray(dados.extintores_previna) ? dados.extintores_previna : [];
+      inspecoesMemoria = Array.isArray(dados.inspecoes_previna) ? dados.inspecoes_previna : [];
+      historicoMemoria = Array.isArray(dados.historico_geral_previna) ? dados.historico_geral_previna : [];
+
+      const cfg = dados.config_previna || {};
+      const diasAlerta = Number(cfg.diasAlerta);
+      configMemoria = {
+        nomeEmpresa: String(cfg.nomeEmpresa || "Previna-se"),
+        diasAlerta: Number.isFinite(diasAlerta) && diasAlerta > 0 ? diasAlerta : 30
+      };
+
+      registrarHistorico("Sistema", "Backup", "Backup do modulo de extintores importado");
+      agendarPersistencia();
+      if (callback) callback(true);
+    } catch (erro) {
+      if (callback) callback(false);
+    }
+  };
+
+  leitor.readAsText(arquivo);
 }
 
 function criarDadosIniciais() {
-  if (!localStorage.getItem("extintores_previna")) {
-    salvarExtintores([
-      { id: 1, tipo: "Pó Químico", local: "Recepção", validade: "2026-04-15", numeroSerie: "PQ-1001" },
-      { id: 2, tipo: "CO₂", local: "Almoxarifado", validade: "2026-11-02", numeroSerie: "CO2-2030" },
-      { id: 3, tipo: "Água Pressurizada", local: "Corredor A", validade: "2026-03-28", numeroSerie: "AG-3021" }
-    ]);
-  }
-
-  if (!localStorage.getItem("inspecoes_previna")) {
-    salvarInspecoes([
-      {
-        extintorId: 1,
-        extintorNome: "Pó Químico - Recepção",
-        data: "2026-03-01",
-        responsavel: "Carlos",
-        resultado: "Aprovado",
-        observacoes: "Equipamento em bom estado"
-      }
-    ]);
-  }
 }
 
 function formatarData(data) {
@@ -64,7 +183,7 @@ function calcularStatus(validade) {
   const diferenca = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
 
   if (diferenca < 0) return { texto: "Vencido", classe: "status-danger" };
-  if (diferenca <= Number(config.diasAlerta)) return { texto: "Próximo", classe: "status-warning" };
+  if (diferenca <= Number(config.diasAlerta)) return { texto: "PrÃ³ximo", classe: "status-warning" };
   return { texto: "Em dia", classe: "status-ok" };
 }
 
@@ -78,7 +197,7 @@ function atualizarDashboard() {
   extintores.forEach((extintor) => {
     const status = calcularStatus(extintor.validade).texto;
     if (status === "Em dia") emDia++;
-    if (status === "Próximo") proximos++;
+    if (status === "PrÃ³ximo") proximos++;
     if (status === "Vencido") vencidos++;
   });
 
@@ -88,7 +207,7 @@ function atualizarDashboard() {
   document.getElementById("totalVencidos").textContent = vencidos;
 
   document.getElementById("alertaVencidos").textContent = `${vencidos} extintores vencidos`;
-  document.getElementById("alertaProximos").textContent = `${proximos} próximos do vencimento`;
+  document.getElementById("alertaProximos").textContent = `${proximos} prÃ³ximos do vencimento`;
   document.getElementById("alertaEmDia").textContent = `${emDia} extintores em dia`;
 
   atualizarGrafico(emDia, proximos, vencidos);
@@ -103,7 +222,7 @@ function atualizarGrafico(emDia, proximos, vencidos) {
   grafico = new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: ["Em dia", "Próximos do vencimento", "Vencidos"],
+      labels: ["Em dia", "PrÃ³ximos do vencimento", "Vencidos"],
       datasets: [{
         data: [emDia, proximos, vencidos],
         backgroundColor: ["#15803d", "#d97706", "#dc2626"],
@@ -210,7 +329,7 @@ function renderRelatorios() {
   extintores.forEach((extintor) => {
     const status = calcularStatus(extintor.validade).texto;
     if (status === "Em dia") emDia++;
-    if (status === "Próximo") proximos++;
+    if (status === "PrÃ³ximo") proximos++;
     if (status === "Vencido") vencidos++;
   });
 
@@ -222,9 +341,9 @@ function renderRelatorios() {
   document.getElementById("textoRelatorio").innerHTML = `
     <p><strong>Total cadastrado:</strong> ${extintores.length} extintores.</p>
     <p><strong>Em dia:</strong> ${emDia} equipamentos.</p>
-    <p><strong>Próximos do vencimento:</strong> ${proximos} equipamentos.</p>
+    <p><strong>PrÃ³ximos do vencimento:</strong> ${proximos} equipamentos.</p>
     <p><strong>Vencidos:</strong> ${vencidos} equipamentos.</p>
-    <p><strong>Inspeções registradas:</strong> ${inspecoes.length} inspeções.</p>
+    <p><strong>InspeÃ§Ãµes registradas:</strong> ${inspecoes.length} inspeÃ§Ãµes.</p>
   `;
 }
 
@@ -279,7 +398,7 @@ function excluirExtintor(id) {
   inspecoes = inspecoes.filter((item) => item.extintorId !== id);
   salvarInspecoes(inspecoes);
 
-  registrarHistorico("Extintores", "Exclusão", `Extintor excluído: ID ${id}`);
+  registrarHistorico("Extintores", "ExclusÃ£o", `Extintor excluÃ­do: ID ${id}`);
   atualizarTudo();
 }
 
@@ -289,7 +408,7 @@ function mostrarQrExtintor(id) {
 
   gerarQrCodeNoElemento(
     "qrCodeBoxExt",
-    `Extintor ID ${extintor.id} | ${extintor.tipo} | Local: ${extintor.local} | Série: ${extintor.numeroSerie} | Validade: ${extintor.validade}`
+    `Extintor ID ${extintor.id} | ${extintor.tipo} | Local: ${extintor.local} | SÃ©rie: ${extintor.numeroSerie} | Validade: ${extintor.validade}`
   );
 
   document.getElementById("modalQrExt").classList.remove("hidden");
@@ -303,11 +422,11 @@ function mostrarSecao(secao) {
   document.querySelector(`.menu-link[data-section="${secao}"]`).classList.add("active");
 
   const titulos = {
-    dashboard: ["Controle de Extintores", "Acompanhe status, vencimentos e inspeções em tempo real."],
+    dashboard: ["Controle de Extintores", "Acompanhe status, vencimentos e inspeÃ§Ãµes em tempo real."],
     extintores: ["Extintores", "Cadastre, edite e acompanhe os equipamentos."],
-    inspecoes: ["Inspeções", "Registre e acompanhe o histórico de inspeções."],
-    relatorios: ["Relatórios", "Visualize o resumo geral do sistema."],
-    configuracoes: ["Configurações", "Personalize o comportamento do painel."]
+    inspecoes: ["InspeÃ§Ãµes", "Registre e acompanhe o histÃ³rico de inspeÃ§Ãµes."],
+    relatorios: ["RelatÃ³rios", "Visualize o resumo geral do sistema."],
+    configuracoes: ["ConfiguraÃ§Ãµes", "Personalize o comportamento do painel."]
   };
 
   document.getElementById("tituloSecao").textContent = titulos[secao][0];
@@ -338,7 +457,7 @@ document.getElementById("formExtintor").addEventListener("submit", function (e) 
     extintores = extintores.map((item) =>
       item.id === Number(idEdicao) ? { ...item, tipo, local, validade, numeroSerie } : item
     );
-    registrarHistorico("Extintores", "Edição", `Extintor atualizado: ${tipo} - ${local}`);
+    registrarHistorico("Extintores", "EdiÃ§Ã£o", `Extintor atualizado: ${tipo} - ${local}`);
     document.getElementById("mensagemExtintor").textContent = "Extintor atualizado com sucesso!";
   } else {
     const novo = {
@@ -385,9 +504,9 @@ document.getElementById("formInspecao").addEventListener("submit", function (e) 
   });
 
   salvarInspecoes(inspecoes);
-  registrarHistorico("Extintores", "Inspeção", `Inspeção registrada para ${extintor.tipo} - ${extintor.local}`);
+  registrarHistorico("Extintores", "InspeÃ§Ã£o", `InspeÃ§Ã£o registrada para ${extintor.tipo} - ${extintor.local}`);
   this.reset();
-  document.getElementById("mensagemInspecao").textContent = "Inspeção registrada com sucesso!";
+  document.getElementById("mensagemInspecao").textContent = "InspeÃ§Ã£o registrada com sucesso!";
   atualizarTudo();
 });
 
@@ -398,8 +517,8 @@ document.getElementById("formConfiguracoes").addEventListener("submit", function
   const diasAlerta = document.getElementById("diasAlerta").value;
 
   salvarConfig({ nomeEmpresa, diasAlerta: Number(diasAlerta) });
-  registrarHistorico("Extintores", "Configuração", `Configurações atualizadas: ${nomeEmpresa}`);
-  document.getElementById("mensagemConfig").textContent = "Configurações salvas com sucesso!";
+  registrarHistorico("Extintores", "ConfiguraÃ§Ã£o", `ConfiguraÃ§Ãµes atualizadas: ${nomeEmpresa}`);
+  document.getElementById("mensagemConfig").textContent = "ConfiguraÃ§Ãµes salvas com sucesso!";
   atualizarTudo();
 });
 
@@ -420,7 +539,7 @@ document.getElementById("btnPdfExtintores")?.addEventListener("click", function 
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
   }).save();
 
-  registrarHistorico("Extintores", "PDF", "Relatório de extintores gerado em PDF");
+  registrarHistorico("Extintores", "PDF", "RelatÃ³rio de extintores gerado em PDF");
 });
 
 document.getElementById("btnExportarBackupExt")?.addEventListener("click", function () {
@@ -447,6 +566,15 @@ document.getElementById("fecharModalQrExt")?.addEventListener("click", function 
   document.getElementById("modalQrExt").classList.add("hidden");
 });
 
-criarDadosIniciais();
-atualizarTudo();
-mostrarSecao("dashboard");
+async function iniciarPainel() {
+  try {
+    await carregarDadosServidor();
+  } catch (erro) {
+    console.error("Erro ao carregar dados do painel:", erro);
+  }
+
+  atualizarTudo();
+  mostrarSecao("dashboard");
+}
+
+iniciarPainel();

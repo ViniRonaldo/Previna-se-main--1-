@@ -1,0 +1,13 @@
+(node:16416) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Erro PUT /api/painel-dados: TypeError: db.transaction is not a function
+    at salvarPainelDados (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\server.js:204:17)
+    at C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\server.js:319:5
+    at Layer.handle [as handle_request] (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\route.js:149:13)
+    at protegerApi (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\server.js:112:5)
+    at Layer.handle [as handle_request] (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\Vinicius\Downloads\Previna-se-main (1)\Previna-se-main\node_modules\express\lib\router\index.js:284:15
