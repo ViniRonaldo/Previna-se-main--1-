@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --primary: #b91c1c;
   --primary-dark: #7f1d1d;
   --secondary: #111827;
@@ -74,25 +74,6 @@ body {
   opacity: 0.88;
 }
 
-.hero-cards {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 28px;
-}
-
-.mini-card {
-  background: rgba(255,255,255,0.12);
-  padding: 18px;
-  border-radius: 14px;
-  min-width: 150px;
-}
-
-.mini-card strong {
-  display: block;
-  font-size: 24px;
-  margin-bottom: 6px;
-}
 
 .panel {
   display: flex;
