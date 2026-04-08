@@ -52,6 +52,32 @@ function initDatabase() {
       descricao TEXT NOT NULL,
       data_hora TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS atestados_registros (
+      id INTEGER PRIMARY KEY,
+      matricula TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      setor TEXT NOT NULL,
+      tipo_atestado TEXT NOT NULL,
+      dias_afastamento INTEGER NOT NULL DEFAULT 0,
+      quantidade_atestados INTEGER NOT NULL DEFAULT 1,
+      cid TEXT DEFAULT "",
+      data_cadastro TEXT NOT NULL,
+      data_retorno TEXT DEFAULT "",
+      cargo TEXT DEFAULT "",
+      empresa TEXT DEFAULT "",
+      observacao TEXT DEFAULT "",
+      mes TEXT NOT NULL,
+      ano INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS atestados_historico (
+      id INTEGER PRIMARY KEY,
+      modulo TEXT NOT NULL,
+      acao TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      data_hora TEXT NOT NULL
+    );
   `);
 
   const totalExt = db.prepare("SELECT COUNT(*) AS total FROM extintores").get().total;
@@ -80,6 +106,33 @@ function initDatabase() {
       INSERT INTO configuracoes (id, nome_empresa, dias_alerta)
       VALUES (1, ?, ?)
     `).run("Previna-se", 30);
+  }
+
+  const totalAtestados = db.prepare("SELECT COUNT(*) AS total FROM atestados_registros").get().total;
+  if (totalAtestados === 0) {
+    db.prepare(`
+      INSERT INTO atestados_registros (
+        id, matricula, nome, setor, tipo_atestado, dias_afastamento, quantidade_atestados,
+        cid, data_cadastro, data_retorno, cargo, empresa, observacao, mes, ano
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      1,
+      "1001",
+      "Joao Silva",
+      "ADM",
+      "Medico",
+      2,
+      1,
+      "J11",
+      "2026-04-08",
+      "2026-04-10",
+      "Assistente",
+      "Previna-se",
+      "Acompanhamento inicial",
+      "Abril",
+      2026
+    );
   }
 }
 
@@ -168,6 +221,257 @@ function obterPainelDados() {
     config: normalizarConfig(configRow || {}),
     historico
   };
+}
+
+function obterAdminBancoDados(limites = {}) {
+  const limiteHistoricoRaw = Number(limites?.historico);
+  const limiteInspecoesRaw = Number(limites?.inspecoes);
+  const limiteHistorico = Number.isFinite(limiteHistoricoRaw) ? Math.max(10, Math.min(500, Math.floor(limiteHistoricoRaw))) : 150;
+  const limiteInspecoes = Number.isFinite(limiteInspecoesRaw) ? Math.max(10, Math.min(500, Math.floor(limiteInspecoesRaw))) : 150;
+
+  const resumo = {
+    totalExtintores: db.prepare("SELECT COUNT(*) AS total FROM extintores").get().total,
+    totalInspecoes: db.prepare("SELECT COUNT(*) AS total FROM inspecoes").get().total,
+    totalHistorico: db.prepare("SELECT COUNT(*) AS total FROM historico").get().total
+  };
+
+  const config = db.prepare(`
+    SELECT nome_empresa AS nomeEmpresa, dias_alerta AS diasAlerta
+    FROM configuracoes
+    WHERE id = 1
+  `).get() || { nomeEmpresa: "Previna-se", diasAlerta: 30 };
+
+  const extintores = db.prepare(`
+    SELECT id, tipo, local, validade, numero_serie AS numeroSerie
+    FROM extintores
+    ORDER BY id DESC
+  `).all();
+
+  const inspecoes = db.prepare(`
+    SELECT
+      i.id,
+      i.extintor_id AS extintorId,
+      e.tipo AS extintorTipo,
+      e.local AS extintorLocal,
+      i.data,
+      i.responsavel,
+      i.resultado,
+      i.observacoes
+    FROM inspecoes i
+    LEFT JOIN extintores e ON e.id = i.extintor_id
+    ORDER BY i.id DESC
+    LIMIT ?
+  `).all(limiteInspecoes);
+
+  const historico = db.prepare(`
+    SELECT id, modulo, acao, descricao, data_hora AS dataHora
+    FROM historico
+    ORDER BY id DESC
+    LIMIT ?
+  `).all(limiteHistorico);
+
+  return {
+    resumo,
+    config: normalizarConfig(config),
+    extintores,
+    inspecoes,
+    historico
+  };
+}
+
+const MESES_PT = [
+  "Janeiro",
+  "Fevereiro",
+  "Marco",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro"
+];
+
+function normalizarRegistroAtestado(item) {
+  const matricula = String(item?.matricula || "").trim();
+  const nome = String(item?.nome || "").trim();
+  const setor = String(item?.setor || "").trim();
+  const tipoAtestado = String(item?.tipoAtestado || item?.tipo_atestado || "Medico").trim();
+  const diasAfastamentoRaw = Number(item?.diasAfastamento ?? item?.dias_afastamento);
+  const quantidadeAtestadosRaw = Number(item?.quantidadeAtestados ?? item?.quantidade_atestados);
+  const cid = String(item?.cid || "").trim();
+  const dataCadastro = String(item?.dataCadastro || item?.data_cadastro || "").trim();
+  const dataRetorno = String(item?.dataRetorno || item?.data_retorno || "").trim();
+  const cargo = String(item?.cargo || "").trim();
+  const empresa = String(item?.empresa || "").trim();
+  const observacao = String(item?.observacao || "").trim();
+
+  if (!matricula || !nome || !setor || !tipoAtestado || !dataCadastro) {
+    return null;
+  }
+
+  const matchData = dataCadastro.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!matchData) return null;
+
+  const mesIndex = Number(matchData[2]) - 1;
+  const anoDaData = Number(matchData[1]);
+  const mes = String(item?.mes || MESES_PT[mesIndex] || "Janeiro").trim();
+  const anoRaw = Number(item?.ano);
+  const ano = Number.isFinite(anoRaw) ? Math.floor(anoRaw) : anoDaData;
+
+  const diasAfastamento = Number.isFinite(diasAfastamentoRaw) ? Math.max(0, Math.floor(diasAfastamentoRaw)) : 0;
+  const quantidadeAtestados = Number.isFinite(quantidadeAtestadosRaw) ? Math.max(0, Math.floor(quantidadeAtestadosRaw)) : 1;
+
+  return {
+    id: Number(item?.id),
+    matricula,
+    nome,
+    setor,
+    tipoAtestado,
+    diasAfastamento,
+    quantidadeAtestados,
+    cid,
+    dataCadastro,
+    dataRetorno,
+    cargo,
+    empresa,
+    observacao,
+    mes,
+    ano
+  };
+}
+
+function obterAtestadosDados() {
+  const registros = db.prepare(`
+    SELECT
+      id,
+      matricula,
+      nome,
+      setor,
+      tipo_atestado AS tipoAtestado,
+      dias_afastamento AS diasAfastamento,
+      quantidade_atestados AS quantidadeAtestados,
+      cid,
+      data_cadastro AS dataCadastro,
+      data_retorno AS dataRetorno,
+      cargo,
+      empresa,
+      observacao,
+      mes,
+      ano
+    FROM atestados_registros
+    ORDER BY id DESC
+  `).all();
+
+  const historico = db.prepare(`
+    SELECT id, modulo, acao, descricao, data_hora AS dataHora
+    FROM atestados_historico
+    ORDER BY id DESC
+  `).all();
+
+  return { registros, historico };
+}
+
+function salvarAtestadosDados(payload) {
+  const registros = Array.isArray(payload?.registros) ? payload.registros : [];
+  const historico = Array.isArray(payload?.historico) ? payload.historico : [];
+
+  const insertRegistroSemId = db.prepare(`
+    INSERT INTO atestados_registros (
+      matricula, nome, setor, tipo_atestado, dias_afastamento, quantidade_atestados, cid,
+      data_cadastro, data_retorno, cargo, empresa, observacao, mes, ano
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertRegistroComId = db.prepare(`
+    INSERT INTO atestados_registros (
+      id, matricula, nome, setor, tipo_atestado, dias_afastamento, quantidade_atestados, cid,
+      data_cadastro, data_retorno, cargo, empresa, observacao, mes, ano
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertHistoricoSemId = db.prepare(`
+    INSERT INTO atestados_historico (modulo, acao, descricao, data_hora)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  const insertHistoricoComId = db.prepare(`
+    INSERT INTO atestados_historico (id, modulo, acao, descricao, data_hora)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  db.exec("BEGIN");
+  try {
+    db.exec("DELETE FROM atestados_registros;");
+    db.exec("DELETE FROM atestados_historico;");
+
+    for (const item of registros) {
+      const reg = normalizarRegistroAtestado(item);
+      if (!reg) continue;
+
+      if (Number.isInteger(reg.id) && reg.id > 0) {
+        insertRegistroComId.run(
+          reg.id,
+          reg.matricula,
+          reg.nome,
+          reg.setor,
+          reg.tipoAtestado,
+          reg.diasAfastamento,
+          reg.quantidadeAtestados,
+          reg.cid,
+          reg.dataCadastro,
+          reg.dataRetorno,
+          reg.cargo,
+          reg.empresa,
+          reg.observacao,
+          reg.mes,
+          reg.ano
+        );
+      } else {
+        insertRegistroSemId.run(
+          reg.matricula,
+          reg.nome,
+          reg.setor,
+          reg.tipoAtestado,
+          reg.diasAfastamento,
+          reg.quantidadeAtestados,
+          reg.cid,
+          reg.dataCadastro,
+          reg.dataRetorno,
+          reg.cargo,
+          reg.empresa,
+          reg.observacao,
+          reg.mes,
+          reg.ano
+        );
+      }
+    }
+
+    for (const item of historico) {
+      const modulo = String(item?.modulo || "").trim();
+      const acao = String(item?.acao || "").trim();
+      const descricao = String(item?.descricao || "").trim();
+      const dataHora = String(item?.dataHora || new Date().toLocaleString("pt-BR")).trim();
+
+      if (!modulo || !acao || !descricao) continue;
+
+      const id = Number(item?.id);
+      if (Number.isInteger(id) && id > 0) {
+        insertHistoricoComId.run(id, modulo, acao, descricao, dataHora);
+      } else {
+        insertHistoricoSemId.run(modulo, acao, descricao, dataHora);
+      }
+    }
+
+    db.exec("COMMIT");
+  } catch (erro) {
+    db.exec("ROLLBACK");
+    throw erro;
+  }
 }
 
 function salvarPainelDados(payload) {
@@ -318,6 +622,39 @@ app.get("/api/painel-dados", protegerApi, (req, res) => {
   }
 });
 
+app.get("/api/admin-banco", protegerApi, (req, res) => {
+  try {
+    return res.json({
+      sucesso: true,
+      dados: obterAdminBancoDados({
+        historico: req.query.limiteHistorico,
+        inspecoes: req.query.limiteInspecoes
+      })
+    });
+  } catch (erro) {
+    console.error("Erro GET /api/admin-banco:", erro);
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: "Erro ao carregar dados do banco."
+    });
+  }
+});
+
+app.get("/api/atestados-dados", protegerApi, (req, res) => {
+  try {
+    return res.json({
+      sucesso: true,
+      dados: obterAtestadosDados()
+    });
+  } catch (erro) {
+    console.error("Erro GET /api/atestados-dados:", erro);
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: "Erro ao carregar dados de atestados."
+    });
+  }
+});
+
 app.put("/api/painel-dados", protegerApi, (req, res) => {
   try {
     salvarPainelDados(req.body || {});
@@ -334,12 +671,36 @@ app.put("/api/painel-dados", protegerApi, (req, res) => {
   }
 });
 
+app.put("/api/atestados-dados", protegerApi, (req, res) => {
+  try {
+    salvarAtestadosDados(req.body || {});
+    return res.json({
+      sucesso: true,
+      mensagem: "Dados de atestados salvos com sucesso."
+    });
+  } catch (erro) {
+    console.error("Erro PUT /api/atestados-dados:", erro);
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: "Erro ao salvar dados de atestados."
+    });
+  }
+});
+
 app.get("/painel", protegerRota, (req, res) => {
   res.sendFile(path.join(__dirname, "painel.html"));
 });
 
+app.get("/atestados", protegerRota, (req, res) => {
+  res.sendFile(path.join(__dirname, "atestados.html"));
+});
+
 app.get("/modulos", protegerRota, (req, res) => {
   res.sendFile(path.join(__dirname, "modulos.html"));
+});
+
+app.get("/admin-banco", protegerRota, (req, res) => {
+  res.sendFile(path.join(__dirname, "admin-banco.html"));
 });
 
 app.get("/logout", (req, res) => {

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Atestados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="atestados.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <div class="logo-box">
+          <div class="logo-icon">AT</div>
+          <div>
+            <h2>Atestados</h2>
+            <p>Gestao interna</p>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a href="#" class="menu-link active" data-section="dashboard">Dashboard</a>
+          <a href="#" class="menu-link" data-section="cadastro">Cadastro</a>
+          <a href="#" class="menu-link" data-section="funcionarios">Funcionarios</a>
+          <a href="#" class="menu-link" data-section="relatorios">Relatorios</a>
+          <a href="#" class="menu-link" data-section="historico">Historico</a>
+          <a href="#" class="menu-link" data-section="backup">Backup</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-actions">
+        <a href="/modulos" class="back-btn">Voltar</a>
+        <a href="/logout" class="logout-btn">Sair</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h1 id="tituloSecao">Controle de Atestados</h1>
+          <p id="subtituloSecao">Acompanhe afastamentos, alertas e relatorios da equipe.</p>
+        </div>
+      </header>
+
+      <section id="sec-dashboard" class="section-content active-section">
+        <section class="cards">
+          <div class="card info-card blue">
+            <span>Total de registros</span>
+            <strong id="totalRegistrosAt">0</strong>
+          </div>
+          <div class="card info-card red">
+            <span>Dias de afastamento</span>
+            <strong id="totalDiasAt">0</strong>
+          </div>
+          <div class="card info-card yellow">
+            <span>Alertas</span>
+            <strong id="totalAlertasAt">0</strong>
+          </div>
+          <div class="card info-card green">
+            <span>Funcionarios afetados</span>
+            <strong id="totalFuncionariosAt">0</strong>
+          </div>
+        </section>
+
+        <section class="grid-two">
+          <div class="card">
+            <div class="section-title">
+              <h2>Registros por mes</h2>
+              <p>Quantidade de atestados no periodo</p>
+            </div>
+            <div class="chart-box">
+              <canvas id="graficoAtestadosMes"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">
+              <h2>Ultimos registros</h2>
+              <p>Atualizacoes recentes</p>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Setor</th>
+                    <th>Dias</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaUltimosAt"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="sec-cadastro" class="section-content">
+        <div class="card form-card">
+          <div class="section-title">
+            <h2>Cadastrar atestado</h2>
+            <p>Inclua novos afastamentos da equipe</p>
+          </div>
+
+          <form id="formAtestado" class="grid-form">
+            <input type="hidden" id="atestadoIdEdicao">
+
+            <div>
+              <label for="matriculaAt">Matricula</label>
+              <input type="text" id="matriculaAt" required>
+            </div>
+
+            <div>
+              <label for="nomeAt">Nome</label>
+              <input type="text" id="nomeAt" required>
+            </div>
+
+            <div>
+              <label for="setorAt">Setor</label>
+              <input type="text" id="setorAt" placeholder="ADM, AGRICOLA, OFICINA..." required>
+            </div>
+
+            <div>
+              <label for="tipoAt">Tipo de atestado</label>
+              <select id="tipoAt" required>
+                <option value="Medico">Medico</option>
+                <option value="Odontologico">Odontologico</option>
+                <option value="Comparecimento">Comparecimento</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="diasAt">Dias de afastamento</label>
+              <input type="number" id="diasAt" min="0" required>
+            </div>
+
+            <div>
+              <label for="qtdAt">Quantidade de atestados</label>
+              <input type="number" id="qtdAt" min="1" value="1" required>
+            </div>
+
+            <div>
+              <label for="dataCadastroAt">Data do atestado</label>
+              <input type="date" id="dataCadastroAt" required>
+            </div>
+
+            <div>
+              <label for="dataRetornoAt">Data de retorno</label>
+              <input type="date" id="dataRetornoAt">
+            </div>
+
+            <div>
+              <label for="cidAt">CID</label>
+              <input type="text" id="cidAt">
+            </div>
+
+            <div>
+              <label for="cargoAt">Cargo</label>
+              <input type="text" id="cargoAt">
+            </div>
+
+            <div>
+              <label for="empresaAt">Empresa</label>
+              <input type="text" id="empresaAt" value="Previna-se">
+            </div>
+
+            <div class="full-width">
+              <label for="obsAt">Observacao</label>
+              <textarea id="obsAt" rows="3"></textarea>
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="submit" class="primary-btn">Salvar registro</button>
+              <button type="button" id="cancelarEdicaoAt" class="secondary-btn">Cancelar edicao</button>
+            </div>
+          </form>
+
+          <p id="mensagemAtestado" class="mensagem-form"></p>
+        </div>
+
+        <div class="card">
+          <div class="section-title table-head">
+            <div>
+              <h2>Lista de registros</h2>
+              <p>Historico de atestados cadastrados</p>
+            </div>
+            <div class="actions-inline">
+              <input type="text" id="filtroNomeAt" placeholder="Filtrar por nome">
+              <input type="text" id="filtroSetorAt" placeholder="Filtrar por setor">
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Matricula</th>
+                  <th>Nome</th>
+                  <th>Setor</th>
+                  <th>Tipo</th>
+                  <th>Dias</th>
+                  <th>Atestados</th>
+                  <th>Data</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaAtestados"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-funcionarios" class="section-content">
+        <div class="card">
+          <div class="section-title table-head">
+            <div>
+              <h2>Consolidado por funcionario</h2>
+              <p>Visao geral por matricula</p>
+            </div>
+            <div class="actions-inline">
+              <input type="text" id="buscaFuncionarioAt" placeholder="Buscar funcionario">
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Matricula</th>
+                  <th>Nome</th>
+                  <th>Setor</th>
+                  <th>Total dias</th>
+                  <th>Total atestados</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaFuncionariosAt"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-relatorios" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Relatorio de atestados</h2>
+            <p>Filtre por mes, ano e setor</p>
+          </div>
+
+          <div class="grid-form relatorio-filtros">
+            <div>
+              <label for="relMesAt">Mes</label>
+              <select id="relMesAt">
+                <option value="">Todos</option>
+                <option value="Janeiro">Janeiro</option>
+                <option value="Fevereiro">Fevereiro</option>
+                <option value="Marco">Marco</option>
+                <option value="Abril">Abril</option>
+                <option value="Maio">Maio</option>
+                <option value="Junho">Junho</option>
+                <option value="Julho">Julho</option>
+                <option value="Agosto">Agosto</option>
+                <option value="Setembro">Setembro</option>
+                <option value="Outubro">Outubro</option>
+                <option value="Novembro">Novembro</option>
+                <option value="Dezembro">Dezembro</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="relAnoAt">Ano</label>
+              <input type="number" id="relAnoAt" placeholder="2026">
+            </div>
+
+            <div>
+              <label for="relSetorAt">Setor</label>
+              <input type="text" id="relSetorAt" placeholder="Todos">
+            </div>
+
+            <div class="full-width actions-inline">
+              <button type="button" id="btnGerarRelatorioAt" class="primary-btn">Gerar relatorio</button>
+              <button type="button" id="btnExportarCsvAt" class="secondary-btn">Exportar CSV</button>
+            </div>
+          </div>
+
+          <div class="cards resumo-relatorio">
+            <div class="card info-card blue">
+              <span>Registros filtrados</span>
+              <strong id="relTotalRegAt">0</strong>
+            </div>
+            <div class="card info-card red">
+              <span>Dias afastamento</span>
+              <strong id="relTotalDiasAt">0</strong>
+            </div>
+            <div class="card info-card green">
+              <span>Funcionarios</span>
+              <strong id="relTotalFuncAt">0</strong>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Matricula</th>
+                  <th>Nome</th>
+                  <th>Setor</th>
+                  <th>Tipo</th>
+                  <th>Dias</th>
+                  <th>Atestados</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaRelatorioAt"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-historico" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Historico de movimentacoes</h2>
+            <p>Cadastros, edicoes, exclusoes e backups</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Modulo</th>
+                  <th>Acao</th>
+                  <th>Descricao</th>
+                  <th>Data/Hora</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaHistoricoAt"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-backup" class="section-content">
+        <div class="card">
+          <div class="section-title">
+            <h2>Backup de atestados</h2>
+            <p>Exporte ou importe os dados do modulo</p>
+          </div>
+
+          <div class="actions-inline top-space">
+            <button type="button" id="btnExportarBackupAt" class="primary-btn">Exportar backup</button>
+            <label class="secondary-btn fake-input-file">
+              Importar backup
+              <input type="file" id="arquivoBackupAt" accept=".json">
+            </label>
+          </div>
+
+          <p id="mensagemBackupAt" class="mensagem-form"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="atestados.js"></script>
+</body>
+</html>

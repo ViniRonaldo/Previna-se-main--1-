@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previna-se | Admin Banco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-banco.css">
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <h1>Admin Banco</h1>
+        <p>Visualizacao dos dados salvos no banco interno.</p>
+      </div>
+      <div class="actions">
+        <button id="btnAtualizar" class="btn btn-primary">Atualizar</button>
+        <button id="btnExportarJson" class="btn btn-secondary">Exportar JSON</button>
+        <a href="/modulos" class="btn btn-link">Voltar</a>
+      </div>
+    </header>
+
+    <section class="cards" id="cardsResumo">
+      <article class="card">
+        <span>Total de extintores</span>
+        <strong id="resumoExtintores">0</strong>
+      </article>
+      <article class="card">
+        <span>Total de inspecoes</span>
+        <strong id="resumoInspecoes">0</strong>
+      </article>
+      <article class="card">
+        <span>Total de historico</span>
+        <strong id="resumoHistorico">0</strong>
+      </article>
+      <article class="card">
+        <span>Dias de alerta</span>
+        <strong id="resumoDiasAlerta">0</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Configuracao</h2>
+      </div>
+      <div class="config-grid">
+        <div class="config-item">
+          <label>Empresa</label>
+          <p id="cfgNomeEmpresa">-</p>
+        </div>
+        <div class="config-item">
+          <label>Dias de alerta</label>
+          <p id="cfgDiasAlerta">-</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Extintores</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Local</th>
+              <th>Validade</th>
+              <th>Serie</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaExtintores"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Inspecoes</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Extintor</th>
+              <th>Data</th>
+              <th>Responsavel</th>
+              <th>Resultado</th>
+              <th>Observacoes</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaInspecoes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Historico</h2>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Modulo</th>
+              <th>Acao</th>
+              <th>Descricao</th>
+              <th>Data/Hora</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaHistorico"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p id="mensagem" class="mensagem"></p>
+  </main>
+
+  <script src="admin-banco.js"></script>
+</body>
+</html>
